@@ -109,6 +109,10 @@ The database root is the current directory. Override it with `db.dir` ([zcfg](ht
 db.dir=/path/to/database
 ```
 
+## Agent Skill
+
+A ready-made [zhtmldb skill](https://github.com/AdamBien/airails/tree/main/java/zhtmldb) teaches coding agents to use zhtmldb as persistent memory: notes, task lists, logs and research findings that survive the session. It is part of [airails.dev](https://airails.dev), a collection of skills and rules for AI-assisted development.
+
 ## Installation
 
 Requires Java 25 or later.
