@@ -75,6 +75,7 @@ zhtmldb users keys                                 # sorted keys
 zhtmldb users list                                 # aligned table, long values cut
 zhtmldb users rm duke twitter                      # remove a field
 zhtmldb users rm duke                              # remove the record
+zhtmldb users open duke                            # open users/duke.html with the default application
 zhtmldb tables
 ```
 
@@ -93,7 +94,7 @@ Matching is a case-insensitive substring. A filter that matches nothing exits 1;
 
 ### Keys
 
-`set`, `get` and `rm` resolve their key by exact match first, then as a case-insensitive substring of the stored keys, so `get 142122` reaches a timestamp record without the date. Several hits exit 1 and list them. For `get` and `rm` no hit exits 1; for `set` it is the key of a new record, so a new key that is a substring of an existing one updates that record instead.
+`set`, `get`, `rm` and `open` resolve their key by exact match first, then as a case-insensitive substring of the stored keys, so `get 142122` reaches a timestamp record without the date. Several hits exit 1 and list them. For `get`, `rm` and `open` no hit exits 1; for `set` it is the key of a new record, so a new key that is a substring of an existing one updates that record instead.
 
 Exit code 0 on success, 1 on missing keys or tables, no match, or usage errors.
 

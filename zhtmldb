@@ -7,7 +7,7 @@ interface Boundary {
 
     String TOOL = "zhtmldb";
     String NAME = MethodHandles.lookup().lookupClass().getEnclosingClass().getName();
-    String VERSION = "2026-09-18.2";
+    String VERSION = "2026-09-22.1";
 
     /// A parsed command line: the table, the command word and the arguments past
     /// them — so commands count their parameters from zero instead of skipping
@@ -52,6 +52,7 @@ interface Boundary {
             case "add" -> add(invocation);
             case "get" -> get(invocation);
             case "rm" -> rm(invocation);
+            case "open" -> open(invocation);
             case "keys" -> printLines(Control.keys(table));
             case "list" -> printLines(Control.listing(table, invocation.parameters()));
             case "find" -> find(invocation);
@@ -153,6 +154,20 @@ interface Boundary {
         }
     }
 
+    /// Opens a record's page with the platform's default application — usually the
+    /// browser, since the page is the UI as much as the storage. The key may be
+    /// abbreviated, as long as it singles out one record.
+    static void open(Invocation invocation) throws Exception {
+        var parameters = invocation.parameters();
+        var table = invocation.table();
+        if (parameters.isEmpty()) {
+            fail("usage: " + commandPrefix(table) + " open <key>");
+        }
+        var key = Control.resolveKey(table, parameters.getFirst());
+        Control.openWithDefaultApplication(Control.recordPage(table, key));
+        Log.success("opened: " + table + "/" + key + Control.PAGE_SUFFIX);
+    }
+
     /// Filters a table, printing key<TAB>label so a hit says what it is rather than
     /// only when it was written. Same terms as `list`, different output: `find` is
     /// the pipeable one.
@@ -227,6 +242,7 @@ interface Boundary {
                   <table> get <key> <field>             print one field value
                   <table> rm <key>                      remove a record
                   <table> rm <key> <field>              remove one field
+                  <table> open <key>                    open the record's page with the default application
                   <table> keys                          print all keys, sorted
                   <table> list [<term>...]              print the records as an aligned table
                   <table> find <term>...                print key<TAB>label for matching records
@@ -238,7 +254,7 @@ interface Boundary {
                 <field>=<text> only that field, <field>= the records having it at all.
                 Several terms narrow each other - every one of them has to match.
 
-                A <key> may be abbreviated in set, get and rm: an exact key wins, otherwise
+                A <key> may be abbreviated in set, get, rm and open: an exact key wins, otherwise
                 it is a case-insensitive substring and has to match exactly one record - an
                 ambiguous abbreviation is an error. For set, matching none means a new record.
 
@@ -594,6 +610,23 @@ interface Control {
 
     static Path recordPage(String table, String key) {
         return DB_DIR.resolve(table).resolve(key + PAGE_SUFFIX);
+    }
+
+    /// Hands a page to the operating system's opener — `open` on macOS, `xdg-open`
+    /// on Linux, `start` on Windows — rather than AWT's Desktop, which would drag a
+    /// GUI toolkit (and a dock icon) into a CLI for one launch. The path is made
+    /// absolute since the opener resolves relative paths against its own notion of
+    /// the working directory.
+    static void openWithDefaultApplication(Path page) throws Exception {
+        var file = page.toAbsolutePath().normalize().toString();
+        var os = System.getProperty("os.name", "").toLowerCase();
+        var command = os.contains("mac") ? List.of("open", file)
+                : os.contains("win") ? List.of("cmd", "/c", "start", "", file)
+                : List.of("xdg-open", file);
+        var exit = new ProcessBuilder(command).inheritIO().start().waitFor();
+        if (exit != 0) {
+            Boundary.fail("could not open: " + file);
+        }
     }
 
     /// Reconstructs a record by pairing `<dt>`/`<dd>` elements — the XHTML page is
